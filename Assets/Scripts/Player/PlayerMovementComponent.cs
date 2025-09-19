@@ -4,42 +4,31 @@ using UnityEngine;
 public class PlayerMovementComponent : MonoBehaviour
 {
     [SerializeField] private Vector2 movement;
-
-    private PlayerInput _playerInput;
+    [SerializeField] public float speed = 5;
+    
     private Rigidbody2D _rb;
 
     private void Awake()
     {
-        _playerInput = new PlayerInput();
         _rb = GetComponent<Rigidbody2D>();
     }
 
-    private void OnEnable()
-    {
-        _playerInput.Movement.WASD.Enable();
-        
-        _playerInput.Movement.WASD.performed += i => movement = i.ReadValue<Vector2>();
-        _playerInput.Movement.WASD.canceled += i => movement = Vector2.zero;
-    }
-    
-    private void OnDisable()
-    {
-        _playerInput.Movement.WASD.performed -= i => movement = i.ReadValue<Vector2>();
-        _playerInput.Movement.WASD.canceled -= i => movement = Vector2.zero;
-        
-        _playerInput.Movement.WASD.Disable();
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        MovePlayer();
-    }
-
-    private void MovePlayer()
+    public void MovePlayer(Vector2 wallNormal)
     {
         if(movement == Vector2.zero) return;
         
-        _rb.transform.Translate(movement * Time.deltaTime);
+        // On wall collision, prevent movement towards wall
+        if (wallNormal != Vector2.zero)
+        {
+            var dot = Vector2.Dot(movement, -wallNormal);
+            if (dot > 0)
+                movement -= dot * -wallNormal;
+        }
+        
+        _rb.transform.Translate(movement * speed * Time.deltaTime);
     }
+    
+    public void SetPlayerDirection(Vector2 newMovement)
+        => movement = newMovement;
+    
 }
